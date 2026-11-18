@@ -15,9 +15,16 @@ public class ProductsController : ControllerBase
 
     // GET: api/Product
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProduct()
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProduct([FromQuery] string? category)
     {
-        return await _context.Product.Select(p => new ProductDto
+        var query = _context.Product.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        return await query.Select(p => new ProductDto
         {
             Id = p.Id,
             Name = p.Name,
@@ -38,6 +45,17 @@ public class ProductsController : ControllerBase
         }
 
         return ToDto(product);
+    }
+
+    [HttpGet("stats")]
+    public async Task<ActionResult<ProductStatsDto>> GetStats()
+    {
+        return new ProductStatsDto
+        {
+            TotalProducts = await _context.Product.CountAsync(),
+            TotalInventoryValue = await _context.Product.SumAsync(p => (long)p.Price * p.Count),
+            AveragePrice = await _context.Product.AverageAsync(p => (double?)p.Price) ?? 0
+        };
     }
 
     // PUT: api/Product/5
