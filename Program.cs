@@ -15,7 +15,11 @@ namespace StorageApi
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            // SwaggerUI fails on GetProducts{id} with OpenAPI 3.1, using 3.0 instead
+            builder.Services.AddOpenApi(options =>
+            {
+                options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+            });
 
             var app = builder.Build();
 
@@ -23,6 +27,11 @@ namespace StorageApi
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/openapi/v1.json", "Storage API v1");
+                });
             }
 
             app.UseHttpsRedirection();
